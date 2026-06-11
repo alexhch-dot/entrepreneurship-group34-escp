@@ -16,51 +16,53 @@
             <span>ESCP Business School</span>
           </div>
         </div>
-        <nav class="nav-list">
-          <button class="nav-item active" data-route="personal" type="button">
-            <span aria-hidden="true">01</span>
-            Onboarding
-          </button>
+        <nav class="nav-list" aria-label="Main sections">
           <button class="nav-item" data-route="upload" type="button">
-            <span aria-hidden="true">02</span>
-            Documents
+            <span aria-hidden="true" class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M9 15h6"/><path d="M9 11h3"/></svg>
+            </span>
+            <span data-i18n="nav.documents">Documents</span>
           </button>
           <button class="nav-item" data-route="resources" type="button">
-            <span aria-hidden="true">03</span>
-            Next Steps
+            <span aria-hidden="true" class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <span data-i18n="nav.resources">Next Steps</span>
           </button>
           <button class="nav-item" data-route="help" type="button">
-            <span aria-hidden="true">04</span>
-            Support
+            <span aria-hidden="true" class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg>
+            </span>
+            <span data-i18n="nav.support">Support</span>
+          </button>
+          <button class="nav-item" data-route="settings" type="button">
+            <span aria-hidden="true" class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.3.3.7.6 1.1.6H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.4Z"/></svg>
+            </span>
+            <span data-i18n="nav.settings">Settings</span>
           </button>
         </nav>
         <div class="language-switcher" aria-label="Language selector">
-          <button class="chip active" type="button">EN</button>
-          <button class="chip" type="button">FR</button>
-          <button class="chip" type="button">ES</button>
+          <button class="chip active" type="button" data-lang="en">EN</button>
+          <button class="chip" type="button" data-lang="fr">FR</button>
+          <button class="chip" type="button" data-lang="es">ES</button>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div>
-            <p class="eyebrow">International Student Administrative Assistant</p>
+            <p class="eyebrow" data-i18n="app.name">International Student Administrative Assistant</p>
             <h1 id="screenTitle">Let's validate your information</h1>
           </div>
           <div class="topbar-actions">
-            <button class="icon-button" type="button" aria-label="Notifications">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 2h16l-2-2Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
-            </button>
             <button class="profile-button" type="button">AM</button>
           </div>
         </header>
 
-        <section class="progress-wrap" aria-label="Progress">
+        <section class="progress-wrap" aria-label="Onboarding progress">
           <div class="progress-step active" data-step="personal"><span>1</span> Validate</div>
           <div class="progress-step" data-step="context"><span>2</span> Context</div>
-          <div class="progress-step" data-step="upload"><span>3</span> Upload</div>
-          <div class="progress-step" data-step="assistant"><span>4</span> Assist</div>
-          <div class="progress-step" data-step="resources"><span>5</span> Finish</div>
         </section>
 
         <div id="app" class="screen-host" aria-live="polite"></div>
