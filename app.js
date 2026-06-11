@@ -1,3 +1,21 @@
+const organizationProfile = {
+  firstName: "Alexandre",
+  lastName: "Martin",
+  phone: "+33 6 12 34 56 78",
+  passport: "PA1234567",
+  nationality: "French",
+  address: "79 Avenue de la Republique, 75011 Paris"
+};
+
+const emptyProfile = {
+  firstName: "",
+  lastName: "",
+  phone: "",
+  passport: "",
+  nationality: "",
+  address: ""
+};
+
 const state = {
   route: "login",
   lang: "en",
@@ -9,14 +27,7 @@ const state = {
   },
   rating: 0,
   contextText: "",
-  profile: {
-    firstName: "Alexandre",
-    lastName: "Martin",
-    phone: "+33 6 12 34 56 78",
-    passport: "PA1234567",
-    nationality: "French",
-    address: "79 Avenue de la Republique, 75011 Paris"
-  }
+  profile: { ...organizationProfile }
 };
 
 const copy = {
@@ -157,6 +168,14 @@ function render() {
 }
 
 function bindViewEvents() {
+  app.querySelectorAll("[data-start-onboarding]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.profile = button.dataset.startOnboarding === "new" ? { ...emptyProfile } : { ...organizationProfile };
+      state.contextText = "";
+      setRoute("personal");
+    });
+  });
+
   app.querySelectorAll("[data-next]").forEach((button) => {
     button.addEventListener("click", () => setRoute(button.dataset.next));
   });
@@ -643,8 +662,8 @@ function loginView() {
       <div class="connection-content">
         <h1>AI assistant for administrative</h1>
         <div class="login-actions">
-          <button class="button primary" type="button" data-next="personal">${state.lang === "fr" ? "Connexion avec l’organisation" : state.lang === "es" ? "Conectar con organización" : "Connect with organization"}</button>
-          <button class="button secondary" type="button" data-next="upload">${state.lang === "fr" ? "Créer un compte" : state.lang === "es" ? "Crear cuenta" : "Create account"}</button>
+          <button class="button primary" type="button" data-start-onboarding="organization">${state.lang === "fr" ? "Connexion avec l’organisation" : state.lang === "es" ? "Conectar con organización" : "Connect with organization"}</button>
+          <button class="button secondary" type="button" data-start-onboarding="new">${state.lang === "fr" ? "Créer un compte" : state.lang === "es" ? "Crear cuenta" : "Create account"}</button>
         </div>
       </div>
     </section>
