@@ -528,8 +528,8 @@ textarea {
 
 .upload-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
 }
 
 .upload-zone {
@@ -602,6 +602,10 @@ textarea {
   margin-top: 16px;
 }
 
+.service-toggle.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .toggle-card {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -618,6 +622,24 @@ textarea {
 .toggle-card strong {
   display: block;
   margin-bottom: 4px;
+}
+
+.service-toggle.compact .toggle-card {
+  text-align: center;
+}
+
+.service-toggle.compact .toggle-card strong {
+  margin-bottom: 0;
+}
+
+.upload-service-panel {
+  order: -1;
+}
+
+.service-description {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .assistant-layout {

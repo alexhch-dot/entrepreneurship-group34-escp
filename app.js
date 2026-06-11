@@ -317,7 +317,6 @@ function contextView() {
       <div class="panel context-visual">
         ${chatSvg()}
         <div>
-          <h2>${t("context")}</h2>
           <p>${state.lang === "fr" ? "Décrivez brièvement votre situation pour recevoir les recommandations les plus adaptées." : state.lang === "es" ? "Describe brevemente tu situación para recibir las recomendaciones más relevantes." : "Briefly describe your situation so we can provide the most relevant guidance and recommendations."}</p>
         </div>
       </div>
@@ -340,8 +339,33 @@ function contextView() {
 }
 
 function uploadView() {
+  const serviceDescription =
+    state.service === "fill"
+      ? state.lang === "fr"
+        ? "Nous préparons les formulaires complétés à partir de votre profil étudiant validé."
+        : state.lang === "es"
+          ? "Preparamos formularios completados usando tu perfil estudiantil validado."
+          : "We prepare completed forms using your validated student profile."
+      : state.lang === "fr"
+        ? "Nous expliquons les informations demandées, la logique administrative et les justificatifs attendus."
+        : state.lang === "es"
+          ? "Explicamos la información solicitada, la lógica administrativa y los documentos requeridos."
+          : "We explain the requested information, administrative logic, and supporting documents.";
   return `
     <div class="upload-layout">
+      <section class="panel service-panel upload-service-panel">
+        <div class="notice">${state.lang === "fr" ? "Importez uniquement des documents liés au même processus administratif." : state.lang === "es" ? "Sube solo documentos relacionados con el mismo proceso administrativo." : "Please upload only documents related to the same administrative process."}</div>
+        <h3>${state.lang === "fr" ? "Sélection du service" : state.lang === "es" ? "Selección de servicio" : "Service Selection"}</h3>
+        <div class="service-toggle compact">
+          <button class="toggle-card ${state.service === "explain" ? "active" : ""}" type="button" data-service="explain">
+            <strong>${state.lang === "fr" ? "Expliquer" : state.lang === "es" ? "Explicar" : "Explain"}</strong>
+          </button>
+          <button class="toggle-card ${state.service === "fill" ? "active" : ""}" type="button" data-service="fill">
+            <strong>${state.lang === "fr" ? "Remplir" : state.lang === "es" ? "Rellenar" : "Fill out"}</strong>
+          </button>
+        </div>
+        <p class="service-description">${serviceDescription}</p>
+      </section>
       <section class="panel form-panel">
         <label class="upload-zone" for="fileInput">
           <input id="fileInput" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" />
@@ -357,20 +381,6 @@ function uploadView() {
           <button class="button primary" type="button" data-next="assistant">${state.lang === "fr" ? "Envoyer" : state.lang === "es" ? "Enviar" : "Submit"}</button>
         </div>
       </section>
-      <aside class="panel service-panel">
-        <div class="notice">${state.lang === "fr" ? "Importez uniquement des documents liés au même processus administratif." : state.lang === "es" ? "Sube solo documentos relacionados con el mismo proceso administrativo." : "Please upload only documents related to the same administrative process."}</div>
-        <h3>${state.lang === "fr" ? "Sélection du service" : state.lang === "es" ? "Selección de servicio" : "Service Selection"}</h3>
-        <div class="service-toggle">
-          <button class="toggle-card ${state.service === "explain" ? "active" : ""}" type="button" data-service="explain">
-            <strong>${state.lang === "fr" ? "Mode explication" : state.lang === "es" ? "Modo explicación" : "Explanation Mode"}</strong>
-            ${state.lang === "fr" ? "Explique les informations demandées, la logique administrative et les justificatifs." : state.lang === "es" ? "Explica la información solicitada, la lógica administrativa y los documentos de apoyo." : "Explains requested information, administrative logic, and supporting documents."}
-          </button>
-          <button class="toggle-card ${state.service === "fill" ? "active" : ""}" type="button" data-service="fill">
-            <strong>${state.lang === "fr" ? "Mode remplissage" : state.lang === "es" ? "Modo rellenar" : "Fill-Out Mode"}</strong>
-            ${state.lang === "fr" ? "Prépare les formulaires complétés avec votre profil étudiant validé." : state.lang === "es" ? "Prepara formularios completos con tu perfil validado." : "Prepares completed forms using your validated student profile."}
-          </button>
-        </div>
-      </aside>
     </div>
   `;
 }
