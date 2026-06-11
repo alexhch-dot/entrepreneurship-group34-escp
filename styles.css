@@ -156,23 +156,8 @@ select:focus-visible {
   color: var(--primary);
 }
 
-.language-switcher {
+.sidebar-chat-btn {
   margin-top: auto;
-  display: flex;
-  gap: 8px;
-}
-
-.chip {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: transparent;
-  color: white;
-  padding: 8px 12px;
-}
-
-.chip.active {
-  background: white;
-  color: var(--primary);
 }
 
 .main {
@@ -238,6 +223,7 @@ h1 {
 .profile-button {
   border: 0;
   box-shadow: var(--shadow);
+  cursor: pointer;
 }
 
 .progress-wrap {

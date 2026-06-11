@@ -94,6 +94,7 @@ const title = document.querySelector("#screenTitle");
 const appShell = document.querySelector(".app-shell");
 const sidebarStudentName = document.querySelector("#sidebarStudentName");
 const profileButton = document.querySelector(".profile-button");
+profileButton.addEventListener("click", () => setRoute("settings"));
 let openExplanationIcon = null;
 
 function t(key) {
@@ -869,10 +870,6 @@ function analysisSuggestionsView() {
       title: state.lang === "fr" ? "Type de document" : state.lang === "es" ? "Tipo de documento" : "Document type",
       body: result.documentType
     },
-    {
-      title: state.lang === "fr" ? "Confiance" : state.lang === "es" ? "Confianza" : "Confidence",
-      body: `${Math.round(result.confidence)}%`
-    },
     ...result.autoFilledFields.slice(0, 3).map((field) => ({
       title: `${field.fieldName} ${state.lang === "fr" ? "prérempli" : state.lang === "es" ? "autocompletado" : "auto-filled"}`,
       body: `${field.value} · ${field.source}`
@@ -903,11 +900,6 @@ function assistantView() {
         </div>
       </aside>
       <section class="panel viewer-panel">
-        <div class="viewer-toolbar">
-          <button class="icon-button" type="button" aria-label="Previous page">‹</button>
-          <strong>${state.lang === "fr" ? "Page 1 sur 4" : state.lang === "es" ? "Página 1 de 4" : "Page 1 of 4"} · 125%</strong>
-          <button class="icon-button" type="button" aria-label="Next page">›</button>
-        </div>
         ${uploadedDocumentPreview()}
         <div class="actions">
           <button class="button secondary" type="button" data-back="upload">${state.lang === "fr" ? "Retour" : state.lang === "es" ? "Atrás" : "Back"}</button>
@@ -952,7 +944,7 @@ function resourcesView() {
             <strong>Prefecture Appointment - Paris</strong>
             <p>${state.lang === "fr" ? "Réservez un rendez-vous pour le titre de séjour via le portail officiel de la préfecture." : state.lang === "es" ? "Reserva una cita de permiso de residencia en el portal oficial de la prefectura." : "Book a residence permit appointment through the official Paris prefecture portal."}</p>
           </div>
-          <button class="button primary" type="button">${state.lang === "fr" ? "Ouvrir le site" : state.lang === "es" ? "Ir al sitio" : "Go to Website"}</button>
+          <a class="button primary" href="https://www.prefecturedepolicedeparis.fr/demarches/etrangers/titres-de-sejour" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir le site" : state.lang === "es" ? "Ir al sitio" : "Go to Website"}</a>
         </div>
         <h2>${state.lang === "fr" ? "Documents requis" : state.lang === "es" ? "Documentos requeridos" : "Required Documents"}</h2>
         <div class="checklist">
