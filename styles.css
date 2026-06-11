@@ -960,9 +960,27 @@ textarea {
   margin-bottom: 10px;
 }
 
+.suggestion-warning {
+  border-color: #e4b160;
+  background: #fff8eb;
+}
+
 .suggestion.warning {
   border-color: #e4b160;
   background: #fff8eb;
+}
+
+.suggestion-list {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.suggestion-field-name {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .resources-layout {

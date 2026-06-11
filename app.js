@@ -1004,29 +1004,37 @@ function analysisSuggestionsView() {
   }
   const result = state.analysis.result;
   if (!result) return "";
-  const suggestionCards = [
-    {
-      title: state.lang === "fr" ? "Type de document" : state.lang === "es" ? "Tipo de documento" : "Document type",
-      body: result.documentType
-    },
-    ...result.autoFilledFields.slice(0, 4).map((field) => ({
-      title: `${field.fieldName} ${state.lang === "fr" ? "prérempli" : state.lang === "es" ? "autocompletado" : "auto-filled"}`,
-      body: `${field.value} · ${field.source}`
-    })),
-    ...result.missingFields.slice(0, 3).map((field) => ({
-      title: field.fieldName,
-      body: field.suggestedAction
-    }))
-  ];
-  return suggestionCards
-    .map((card) => `
-      <div class="suggestion explainable">
-        <strong>${escapeHtml(card.title)}</strong>
-        <p>${escapeHtml(card.body)}</p>
-        ${explanationButton(card.title, card.body)}
-      </div>
-    `)
-    .join("");
+
+  const docTypeTitle = state.lang === "fr" ? "Type de document" : state.lang === "es" ? "Tipo de documento" : "Document type";
+  const autoTitle = state.lang === "fr" ? "Champs préremplis" : state.lang === "es" ? "Campos autocompletados" : "Auto-filled Fields";
+  const missingTitle = state.lang === "fr" ? "Informations manquantes" : state.lang === "es" ? "Información faltante" : "Missing Information";
+
+  const docTypeCard = `
+    <div class="suggestion explainable">
+      <strong>${escapeHtml(docTypeTitle)}</strong>
+      <p>${escapeHtml(result.documentType)}</p>
+      ${explanationButton(docTypeTitle, result.documentType)}
+    </div>`;
+
+  const autoCard = result.autoFilledFields.length ? `
+    <div class="suggestion explainable">
+      <strong>${autoTitle}</strong>
+      <ul class="suggestion-list">
+        ${result.autoFilledFields.map((f) => `<li><span class="suggestion-field-name">${escapeHtml(f.fieldName)}</span> ${escapeHtml(f.value)}</li>`).join("")}
+      </ul>
+      ${explanationButton(autoTitle, result.autoFilledFields.map((f) => `${f.fieldName}: ${f.value}`).join(" · "))}
+    </div>` : "";
+
+  const missingCard = result.missingFields.length ? `
+    <div class="suggestion suggestion-warning explainable">
+      <strong>${missingTitle}</strong>
+      <ul class="suggestion-list">
+        ${result.missingFields.map((f) => `<li>${escapeHtml(f.fieldName)}</li>`).join("")}
+      </ul>
+      ${explanationButton(missingTitle, result.missingFields.map((f) => f.suggestedAction).join(" "))}
+    </div>` : "";
+
+  return docTypeCard + autoCard + missingCard;
 }
 
 function assistantView() {
