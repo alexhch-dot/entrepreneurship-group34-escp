@@ -468,8 +468,28 @@ function assistantView() {
 
 function resourcesView() {
   return `
-    <div class="resources-layout">
-      <section class="panel resource-panel">
+    <div class="resources-layout resources-map-first">
+      <section class="panel resource-panel resources-map-panel">
+        <h2>${state.lang === "fr" ? "Lieux utiles" : state.lang === "es" ? "Ubicaciones útiles" : "Useful Locations"}</h2>
+        <div class="map-card">
+          <iframe
+            title="Paris Prefecture map"
+            src="https://www.google.com/maps?q=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen>
+          </iframe>
+          <div class="map-location">
+            <strong>Paris Prefecture</strong>
+            <span>1 Rue de Lutece, 75004 Paris</span>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="button secondary" href="https://www.google.com/maps/search/?api=1&query=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir dans Google Maps" : state.lang === "es" ? "Abrir en Google Maps" : "Open in Google Maps"}</a>
+          <a class="button primary" href="https://www.google.com/maps/dir/?api=1&destination=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Itinéraire" : state.lang === "es" ? "Indicaciones" : "Get Directions"}</a>
+        </div>
+      </section>
+      <section class="panel resource-panel resources-info-panel">
         <h2>${state.lang === "fr" ? "Prise de rendez-vous" : state.lang === "es" ? "Reserva de cita" : "Appointment Booking"}</h2>
         <div class="resource-row">
           <div>
@@ -491,26 +511,6 @@ function resourcesView() {
           <button class="button primary" type="button" data-next="upload">${state.lang === "fr" ? "Retour au tableau de bord" : state.lang === "es" ? "Volver al panel" : "Back to Dashboard"}</button>
         </div>
       </section>
-      <aside class="panel resource-panel">
-        <h2>${state.lang === "fr" ? "Lieux utiles" : state.lang === "es" ? "Ubicaciones útiles" : "Useful Locations"}</h2>
-        <div class="map-card">
-          <iframe
-            title="Paris Prefecture map"
-            src="https://www.google.com/maps?q=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris&output=embed"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            allowfullscreen>
-          </iframe>
-          <div class="map-location">
-            <strong>Paris Prefecture</strong>
-            <span>1 Rue de Lutece, 75004 Paris</span>
-          </div>
-        </div>
-        <div class="actions">
-          <a class="button secondary" href="https://www.google.com/maps/search/?api=1&query=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir dans Google Maps" : state.lang === "es" ? "Abrir en Google Maps" : "Open in Google Maps"}</a>
-          <a class="button primary" href="https://www.google.com/maps/dir/?api=1&destination=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Itinéraire" : state.lang === "es" ? "Indicaciones" : "Get Directions"}</a>
-        </div>
-      </aside>
     </div>
   `;
 }

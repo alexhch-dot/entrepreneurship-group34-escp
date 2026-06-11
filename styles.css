@@ -729,6 +729,26 @@ textarea {
   gap: 22px;
 }
 
+.resources-map-first {
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(520px, 2fr) minmax(260px, 1fr);
+}
+
+.resources-map-panel,
+.resources-info-panel {
+  min-height: 0;
+}
+
+.resources-map-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.resources-info-panel {
+  display: grid;
+  align-content: start;
+}
+
 .resource-row {
   display: flex;
   justify-content: space-between;
@@ -756,9 +776,15 @@ textarea {
   background: white;
 }
 
+.resources-map-panel .map-card {
+  min-height: 0;
+  height: 100%;
+}
+
 .map-card iframe {
   width: 100%;
   min-height: 280px;
+  height: 100%;
   display: block;
   border: 0;
 }
