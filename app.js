@@ -1,7 +1,6 @@
 const state = {
   route: "login",
   lang: "en",
-  service: "explain",
   files: [],
   rating: 0,
   contextText: "",
@@ -159,13 +158,6 @@ function bindViewEvents() {
   app.querySelectorAll("[data-back]").forEach((button) => {
     button.addEventListener("click", () => setRoute(button.dataset.back));
   });
-  app.querySelectorAll("[data-service]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.service = button.dataset.service;
-      render();
-    });
-  });
-
   document.querySelectorAll("[data-lang]").forEach((button) => {
     button.onclick = () => {
       state.lang = button.dataset.lang;
@@ -209,7 +201,8 @@ function bindViewEvents() {
 
   app.querySelectorAll("[data-remove-file]").forEach((button) => {
     button.addEventListener("click", () => {
-      state.files.splice(Number(button.dataset.removeFile), 1);
+      const [removedFile] = state.files.splice(Number(button.dataset.removeFile), 1);
+      if (removedFile?.url) URL.revokeObjectURL(removedFile.url);
       render();
     });
   });
@@ -260,7 +253,14 @@ function addFiles(fileList) {
   const accepted = ["application/pdf", "image/png", "image/jpeg"];
   Array.from(fileList)
     .filter((file) => accepted.includes(file.type) || /\.(pdf|png|jpe?g)$/i.test(file.name))
-    .forEach((file) => state.files.push({ name: file.name, size: file.size }));
+    .forEach((file) => {
+      state.files.push({
+        name: file.name,
+        size: file.size,
+        type: file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg"),
+        url: URL.createObjectURL(file)
+      });
+    });
   render();
 }
 
@@ -439,32 +439,12 @@ function contextView() {
 }
 
 function uploadView() {
-  const serviceDescription =
-    state.service === "fill"
-      ? state.lang === "fr"
-        ? "Nous préparons les formulaires complétés à partir de votre profil étudiant validé."
-        : state.lang === "es"
-          ? "Preparamos formularios completados usando tu perfil estudiantil validado."
-          : "We prepare completed forms using your validated student profile."
-      : state.lang === "fr"
-        ? "Nous expliquons les informations demandées, la logique administrative et les justificatifs attendus."
-        : state.lang === "es"
-          ? "Explicamos la información solicitada, la lógica administrativa y los documentos requeridos."
-          : "We explain the requested information, administrative logic, and supporting documents.";
   return `
     <div class="upload-layout">
       <section class="panel service-panel upload-service-panel">
         <div class="notice">${state.lang === "fr" ? "Importez uniquement des documents liés au même processus administratif." : state.lang === "es" ? "Sube solo documentos relacionados con el mismo proceso administrativo." : "Please upload only documents related to the same administrative process."}</div>
-        <h3>${state.lang === "fr" ? "Sélection du service" : state.lang === "es" ? "Selección de servicio" : "Service Selection"}</h3>
-        <div class="service-toggle compact">
-          <button class="toggle-card ${state.service === "explain" ? "active" : ""}" type="button" data-service="explain">
-            <strong>${state.lang === "fr" ? "Expliquer" : state.lang === "es" ? "Explicar" : "Explain"}</strong>
-          </button>
-          <button class="toggle-card ${state.service === "fill" ? "active" : ""}" type="button" data-service="fill">
-            <strong>${state.lang === "fr" ? "Remplir" : state.lang === "es" ? "Rellenar" : "Fill out"}</strong>
-          </button>
-        </div>
-        <p class="service-description">${serviceDescription}</p>
+        <h3>${state.lang === "fr" ? "Analyse du document" : state.lang === "es" ? "Análisis del documento" : "Document analysis"}</h3>
+        <p class="service-description">${state.lang === "fr" ? "Après l’import, l’assistant affichera votre document et expliquera les sections importantes directement dessus." : state.lang === "es" ? "Después de subirlo, el asistente mostrará tu documento y explicará las secciones importantes directamente sobre él." : "After upload, the assistant will display your document and explain the important sections directly on it."}</p>
       </section>
       <section class="panel form-panel">
         <label class="upload-zone" for="fileInput">
@@ -497,6 +477,38 @@ function docItem(file, index) {
   `;
 }
 
+function uploadedDocumentPreview() {
+  const file = state.files[0];
+  if (!file) {
+    return `
+      <div class="document-preview empty-document-preview" aria-label="Document preview">
+        <p>${state.lang === "fr" ? "Aucun document importé. Retournez à l’étape précédente pour ajouter un PDF, PNG ou JPG." : state.lang === "es" ? "No se ha subido ningún documento. Vuelve al paso anterior para añadir un PDF, PNG o JPG." : "No document uploaded yet. Go back to add a PDF, PNG, or JPG."}</p>
+      </div>
+    `;
+  }
+  const fileName = escapeHtml(file.name);
+  const fileUrl = escapeHtml(file.url);
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  const preview = isPdf
+    ? `<iframe class="uploaded-document-frame" src="${fileUrl}" title="${fileName}"></iframe>`
+    : `<img class="uploaded-document-image" src="${fileUrl}" alt="${fileName}" />`;
+  return `
+    <div class="document-preview uploaded-document-preview" aria-label="Document preview">
+      <div class="uploaded-document-header">
+        <strong>${fileName}</strong>
+        <span>${fileSize(file.size)}</span>
+      </div>
+      <div class="uploaded-document-stage">
+        ${preview}
+        <div class="document-overlay-note explainable">
+          <strong>${state.lang === "fr" ? "Zone à vérifier" : state.lang === "es" ? "Área para revisar" : "Section to review"}</strong>
+          ${explanationButton("Why is this section highlighted?", "The assistant uses this area to connect the uploaded document with the information required in the administrative process.")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function assistantView() {
   return `
     <div class="assistant-layout">
@@ -514,23 +526,7 @@ function assistantView() {
           <strong>${state.lang === "fr" ? "Page 1 sur 4" : state.lang === "es" ? "Página 1 de 4" : "Page 1 of 4"} · 125%</strong>
           <button class="icon-button" type="button" aria-label="Next page">›</button>
         </div>
-        <div class="document-preview" aria-label="Document preview">
-          <div class="preview-line short"></div>
-          <div class="preview-line"></div>
-          <div class="preview-line"></div>
-          <div class="highlight-box explainable">
-            <strong>${state.lang === "fr" ? "Adresse de résidence actuelle" : state.lang === "es" ? "Dirección residencial actual" : "Current residential address"}</strong>
-            <p>79 Avenue de la Republique, 75011 Paris</p>
-            ${explanationButton("Why is this required?", "This field is required by the residence permit application. The value can be checked against the proof of address you uploaded.")}
-          </div>
-          <div class="preview-line"></div>
-          <div class="preview-line short"></div>
-          <div class="highlight-box explainable">
-            <strong>${state.lang === "fr" ? "Justificatif requis" : state.lang === "es" ? "Documento requerido" : "Supporting document needed"}</strong>
-            <p>${state.lang === "fr" ? "Justificatif de domicile de moins de 3 mois." : state.lang === "es" ? "Comprobante de domicilio de los últimos 3 meses." : "Proof of address dated within the last 3 months."}</p>
-            ${explanationButton("Where does this come from?", "The supporting document is requested by the administration to validate that your declared address is current.")}
-          </div>
-        </div>
+        ${uploadedDocumentPreview()}
         <div class="actions">
           <button class="button secondary" type="button" data-back="upload">${state.lang === "fr" ? "Retour" : state.lang === "es" ? "Atrás" : "Back"}</button>
           <button class="button primary" type="button" data-next="resources">${state.lang === "fr" ? "Étape suivante : trouver un rendez-vous" : state.lang === "es" ? "Siguiente paso: encontrar una cita" : "Next Step: Find an Appointment"}</button>
