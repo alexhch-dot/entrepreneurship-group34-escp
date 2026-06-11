@@ -451,6 +451,7 @@ h1 {
 .field {
   display: grid;
   gap: 8px;
+  position: relative;
 }
 
 .field.full {
@@ -737,6 +738,7 @@ textarea {
   background: #f6f9ff;
   border-radius: 0 8px 8px 0;
   padding: 12px;
+  position: relative;
 }
 
 .viewer-toolbar {
@@ -772,6 +774,80 @@ textarea {
   border-radius: 8px;
   padding: 14px;
   background: #eff6ff;
+  position: relative;
+}
+
+.explainable {
+  position: relative;
+}
+
+.explanation-trigger {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #b8c8e8;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 140ms ease, transform 140ms ease, color 140ms ease, border-color 140ms ease;
+  z-index: 2;
+}
+
+.field .explanation-trigger {
+  top: 30px;
+  right: 44px;
+}
+
+.field:hover .explanation-trigger,
+.field:focus-within .explanation-trigger,
+.explainable:hover .explanation-trigger,
+.explainable:focus-within .explanation-trigger,
+.explanation-trigger.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.explanation-trigger:hover,
+.explanation-trigger.is-open {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.explanation-popup {
+  position: absolute;
+  width: min(280px, calc(100vw - 28px));
+  z-index: 50;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 16px 36px rgba(15, 35, 70, 0.16);
+  padding: 12px 13px;
+}
+
+.explanation-popup strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.86rem;
+  margin-bottom: 6px;
+}
+
+.explanation-popup p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .suggestion {

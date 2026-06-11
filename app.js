@@ -79,12 +79,14 @@ const title = document.querySelector("#screenTitle");
 const appShell = document.querySelector(".app-shell");
 const sidebarStudentName = document.querySelector("#sidebarStudentName");
 const profileButton = document.querySelector(".profile-button");
+let openExplanationIcon = null;
 
 function t(key) {
   return copy[state.lang][key] || copy.en[key] || key;
 }
 
 function setRoute(route) {
+  closeExplanation();
   state.route = route;
   document.documentElement.lang = state.lang;
   title.textContent = t(route);
@@ -240,6 +242,13 @@ function bindViewEvents() {
       updateStudentIdentity();
     });
   });
+
+  app.querySelectorAll("[data-explanation]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleExplanation(button);
+    });
+  });
 }
 
 function updateCounter(textarea) {
@@ -278,6 +287,47 @@ function sendMockMessage(input) {
 
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+}
+
+function explanationButton(title, body) {
+  return `
+    <button
+      class="explanation-trigger"
+      type="button"
+      aria-label="${escapeHtml(title)}"
+      data-explanation-title="${escapeHtml(title)}"
+      data-explanation="${escapeHtml(body)}">?</button>
+  `;
+}
+
+function toggleExplanation(button) {
+  if (openExplanationIcon === button) {
+    closeExplanation();
+    return;
+  }
+  closeExplanation();
+  openExplanationIcon = button;
+  const popup = document.createElement("div");
+  popup.className = "explanation-popup";
+  popup.setAttribute("role", "tooltip");
+  popup.innerHTML = `
+    <strong>${button.dataset.explanationTitle}</strong>
+    <p>${button.dataset.explanation}</p>
+  `;
+  document.body.appendChild(popup);
+  const iconRect = button.getBoundingClientRect();
+  const popupRect = popup.getBoundingClientRect();
+  const left = Math.min(iconRect.left + window.scrollX, window.scrollX + window.innerWidth - popupRect.width - 14);
+  const top = iconRect.bottom + window.scrollY + 8;
+  popup.style.left = `${Math.max(14, left)}px`;
+  popup.style.top = `${top}px`;
+  button.classList.add("is-open");
+}
+
+function closeExplanation() {
+  document.querySelector(".explanation-popup")?.remove();
+  openExplanationIcon?.classList.remove("is-open");
+  openExplanationIcon = null;
 }
 
 function loginView() {
@@ -340,6 +390,14 @@ function personalView() {
                   <input id="${key}" type="${type}" value="${state.profile[key]}" aria-describedby="${key}Status" />
                   <button class="edit-icon" type="button" aria-label="Edit ${label}">✎</button>
                 </div>
+                ${explanationButton(
+                  state.lang === "fr" ? `Pourquoi ${label} est requis ?` : state.lang === "es" ? `¿Por qué se requiere ${label}?` : `Why is ${label} required?`,
+                  state.lang === "fr"
+                    ? "Cette information est utilisée pour préremplir les formulaires administratifs et vérifier la cohérence avec vos documents."
+                    : state.lang === "es"
+                      ? "Esta información se usa para rellenar formularios administrativos y comprobar que coincide con tus documentos."
+                      : "This information is used to pre-fill administrative forms and check consistency with your documents."
+                )}
                 <span class="field-error" id="${key}Status" hidden><span aria-hidden="true">!</span>${state.lang === "fr" ? "Format incorrect" : state.lang === "es" ? "Formato incorrecto" : "Invalid format"}</span>
               </div>
             `)
@@ -445,9 +503,9 @@ function assistantView() {
       <aside class="panel guidance-panel">
         <h3>${state.lang === "fr" ? "Guidage" : state.lang === "es" ? "Guía" : "Guidance"}</h3>
         <div class="guidance-list">
-          <div class="guidance-card"><strong>${state.lang === "fr" ? "Pourquoi c’est requis" : state.lang === "es" ? "Por qué se requiere" : "Why this is required"}</strong><p>${state.lang === "fr" ? "Les autorités d’immigration ont besoin d’une preuve de votre adresse actuelle." : state.lang === "es" ? "Las autoridades de inmigración necesitan prueba de tu residencia actual." : "Immigration authorities need proof of your current residential address."}</p></div>
-          <div class="guidance-card"><strong>${state.lang === "fr" ? "Exigence administrative" : state.lang === "es" ? "Requisito administrativo" : "Government requirement"}</strong><p>${state.lang === "fr" ? "L’adresse doit correspondre à une facture récente ou une attestation de logement." : state.lang === "es" ? "La dirección debe coincidir con una factura reciente o certificado de alojamiento." : "The address must match a recent utility bill or housing attestation."}</p></div>
-          <div class="guidance-card"><strong>${state.lang === "fr" ? "Erreur fréquente" : state.lang === "es" ? "Error común" : "Common mistake"}</strong><p>${state.lang === "fr" ? "N’utilisez pas l’adresse de l’école sauf si c’est votre résidence officielle." : state.lang === "es" ? "No uses la dirección de la escuela salvo que sea tu residencia oficial." : "Do not use your school address unless it is your official residence."}</p></div>
+          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Pourquoi c’est requis" : state.lang === "es" ? "Por qué se requiere" : "Why this is required"}</strong><p>${state.lang === "fr" ? "Les autorités d’immigration ont besoin d’une preuve de votre adresse actuelle." : state.lang === "es" ? "Las autoridades de inmigración necesitan prueba de tu residencia actual." : "Immigration authorities need proof of your current residential address."}</p>${explanationButton("Residence context", "This section connects your uploaded proof of address with the address requested by the residence permit application.")}</div>
+          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Exigence administrative" : state.lang === "es" ? "Requisito administrativo" : "Government requirement"}</strong><p>${state.lang === "fr" ? "L’adresse doit correspondre à une facture récente ou une attestation de logement." : state.lang === "es" ? "La dirección debe coincidir con una factura reciente o certificado de alojamiento." : "The address must match a recent utility bill or housing attestation."}</p>${explanationButton("Administrative source", "The requirement comes from government document checks and helps avoid appointment rejection.")}</div>
+          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Erreur fréquente" : state.lang === "es" ? "Error común" : "Common mistake"}</strong><p>${state.lang === "fr" ? "N’utilisez pas l’adresse de l’école sauf si c’est votre résidence officielle." : state.lang === "es" ? "No uses la dirección de la escuela salvo que sea tu residencia oficial." : "Do not use your school address unless it is your official residence."}</p>${explanationButton("Common mistake", "School addresses are often rejected unless they are listed as your official housing address.")}</div>
         </div>
       </aside>
       <section class="panel viewer-panel">
@@ -460,15 +518,17 @@ function assistantView() {
           <div class="preview-line short"></div>
           <div class="preview-line"></div>
           <div class="preview-line"></div>
-          <div class="highlight-box">
+          <div class="highlight-box explainable">
             <strong>${state.lang === "fr" ? "Adresse de résidence actuelle" : state.lang === "es" ? "Dirección residencial actual" : "Current residential address"}</strong>
             <p>79 Avenue de la Republique, 75011 Paris</p>
+            ${explanationButton("Why is this required?", "This field is required by the residence permit application. The value can be checked against the proof of address you uploaded.")}
           </div>
           <div class="preview-line"></div>
           <div class="preview-line short"></div>
-          <div class="highlight-box">
+          <div class="highlight-box explainable">
             <strong>${state.lang === "fr" ? "Justificatif requis" : state.lang === "es" ? "Documento requerido" : "Supporting document needed"}</strong>
             <p>${state.lang === "fr" ? "Justificatif de domicile de moins de 3 mois." : state.lang === "es" ? "Comprobante de domicilio de los últimos 3 meses." : "Proof of address dated within the last 3 months."}</p>
+            ${explanationButton("Where does this come from?", "The supporting document is requested by the administration to validate that your declared address is current.")}
           </div>
         </div>
         <div class="actions">
@@ -632,6 +692,14 @@ function settingsView() {
               <div class="field ${size || ""}">
                 <label for="settings-${key}">${label}</label>
                 <input id="settings-${key}" type="${type}" value="${escapeHtml(state.profile[key])}" data-profile-field="${key}" />
+                ${explanationButton(
+                  state.lang === "fr" ? `Modifier ${label}` : state.lang === "es" ? `Editar ${label}` : `Edit ${label}`,
+                  state.lang === "fr"
+                    ? "Cette valeur met à jour votre profil et sera réutilisée dans les formulaires."
+                    : state.lang === "es"
+                      ? "Este valor actualiza tu perfil y se reutilizará en los formularios."
+                      : "This value updates your profile and will be reused in forms."
+                )}
               </div>
             `)
             .join("")}
@@ -674,6 +742,14 @@ function chatSvg() {
 
 document.querySelectorAll(".nav-item").forEach((item) => {
   item.addEventListener("click", () => setRoute(item.dataset.route));
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest(".explanation-popup")) return;
+  closeExplanation();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeExplanation();
 });
 
 setRoute("login");
