@@ -77,6 +77,8 @@ const progressOrder = ["personal", "context"];
 const app = document.querySelector("#app");
 const title = document.querySelector("#screenTitle");
 const appShell = document.querySelector(".app-shell");
+const sidebarStudentName = document.querySelector("#sidebarStudentName");
+const profileButton = document.querySelector(".profile-button");
 
 function t(key) {
   return copy[state.lang][key] || copy.en[key] || key;
@@ -86,6 +88,7 @@ function setRoute(route) {
   state.route = route;
   document.documentElement.lang = state.lang;
   title.textContent = t(route);
+  updateStudentIdentity();
   const entryRoute = ["login", "personal", "context"].includes(route);
   appShell.classList.toggle("entry-mode", entryRoute);
   document.querySelectorAll(".nav-item").forEach((item) => {
@@ -106,6 +109,18 @@ function setRoute(route) {
   updateProgress(route);
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function updateStudentIdentity() {
+  const fullName = `${state.profile.firstName} ${state.profile.lastName}`.trim();
+  const initials = [state.profile.firstName, state.profile.lastName]
+    .filter(Boolean)
+    .map((name) => name[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  sidebarStudentName.textContent = fullName || "Student";
+  profileButton.textContent = initials || "ST";
 }
 
 function updateProgress(route) {
@@ -218,6 +233,13 @@ function bindViewEvents() {
     updateCounter(feedback);
     feedback.addEventListener("input", () => updateCounter(feedback));
   }
+
+  app.querySelectorAll("[data-profile-field]").forEach((input) => {
+    input.addEventListener("input", () => {
+      state.profile[input.dataset.profileField] = input.value;
+      updateStudentIdentity();
+    });
+  });
 }
 
 function updateCounter(textarea) {
@@ -552,11 +574,19 @@ function thanksView() {
 }
 
 function settingsView() {
+  const settingsFields = [
+    ["firstName", state.lang === "fr" ? "Prénom" : state.lang === "es" ? "Nombre" : "First Name", "text"],
+    ["lastName", state.lang === "fr" ? "Nom" : state.lang === "es" ? "Apellido" : "Last Name", "text"],
+    ["nationality", state.lang === "fr" ? "Nationalité" : state.lang === "es" ? "Nacionalidad" : "Nationality", "text"],
+    ["phone", state.lang === "fr" ? "Numéro de téléphone" : state.lang === "es" ? "Número de teléfono" : "Phone Number", "tel"],
+    ["passport", state.lang === "fr" ? "Passeport / ID" : state.lang === "es" ? "Pasaporte / ID" : "Passport / ID Number", "text"],
+    ["address", state.lang === "fr" ? "Adresse" : state.lang === "es" ? "Dirección" : "Address", "text", "full"]
+  ];
   return `
     <section class="panel help-panel settings-panel">
       <div>
         <h2>${state.lang === "fr" ? "Préférences" : state.lang === "es" ? "Preferencias" : "Preferences"}</h2>
-        <p>${state.lang === "fr" ? "Choisissez la langue de l’interface." : state.lang === "es" ? "Elige el idioma de la interfaz." : "Choose the interface language."}</p>
+        <p>${state.lang === "fr" ? "Modifiez vos informations et choisissez la langue de l’interface." : state.lang === "es" ? "Modifica tu información y elige el idioma de la interfaz." : "Edit your information and choose the interface language."}</p>
       </div>
       <div class="settings-row">
         <strong>${state.lang === "fr" ? "Langue" : state.lang === "es" ? "Idioma" : "Language"}</strong>
@@ -568,7 +598,16 @@ function settingsView() {
       </div>
       <div class="settings-row">
         <strong>${state.lang === "fr" ? "Profil" : state.lang === "es" ? "Perfil" : "Profile"}</strong>
-        <p>${state.profile.firstName} ${state.profile.lastName} · ESCP Business School</p>
+        <div class="form-grid settings-profile-grid">
+          ${settingsFields
+            .map(([key, label, type, size]) => `
+              <div class="field ${size || ""}">
+                <label for="settings-${key}">${label}</label>
+                <input id="settings-${key}" type="${type}" value="${escapeHtml(state.profile[key])}" data-profile-field="${key}" />
+              </div>
+            `)
+            .join("")}
+        </div>
       </div>
     </section>
   `;

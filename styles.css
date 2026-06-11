@@ -84,6 +84,12 @@ select:focus-visible {
   gap: 12px;
 }
 
+.brand strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
 .brand-mark,
 .profile-button {
   width: 44px;
@@ -883,6 +889,10 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.settings-profile-grid {
+  margin-top: 4px;
 }
 
 .success-icon {
