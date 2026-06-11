@@ -36,6 +36,10 @@ button {
   cursor: pointer;
 }
 
+a.button {
+  text-decoration: none;
+}
+
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
@@ -746,34 +750,28 @@ textarea {
 }
 
 .map-card {
-  min-height: 250px;
-  display: grid;
-  align-content: end;
-  gap: 8px;
-  background:
-    linear-gradient(90deg, rgba(15, 61, 145, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(15, 61, 145, 0.08) 1px, transparent 1px),
-    #eef4ff;
-  background-size: 34px 34px;
-  padding: 18px;
+  overflow: hidden;
   border-radius: 8px;
   border: 1px solid var(--line);
+  background: white;
 }
 
-.map-pin {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px 999px 999px 0;
-  transform: rotate(-45deg);
-  background: var(--primary);
+.map-card iframe {
+  width: 100%;
+  min-height: 280px;
+  display: block;
+  border: 0;
+}
+
+.map-location {
   display: grid;
-  place-items: center;
+  gap: 4px;
+  padding: 14px 16px;
 }
 
-.map-pin span {
-  transform: rotate(45deg);
-  color: white;
-  font-weight: 800;
+.map-location span {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .help-benefits {
