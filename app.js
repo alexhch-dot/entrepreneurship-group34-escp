@@ -1065,42 +1065,50 @@ function resourcesView() {
   return `
     <div class="resources-layout resources-map-first">
       <section class="panel resource-panel resources-map-panel">
-        <h2>${state.lang === "fr" ? "Lieux utiles" : state.lang === "es" ? "Ubicaciones útiles" : "Useful Locations"}</h2>
+        <h2>${state.lang === "fr" ? "Bureau d'extranjería le plus proche" : state.lang === "es" ? "Oficina de Extranjería más cercana" : "Nearest Extranjería Office"}</h2>
         <div class="map-card">
           <iframe
-            title="Paris Prefecture map"
-            src="https://www.google.com/maps?q=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris&output=embed"
+            title="Oficina de Extranjería Madrid map"
+            src="https://www.google.com/maps?q=Calle+Pradillo,+40,+28002+Madrid&output=embed"
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"
             allowfullscreen>
           </iframe>
           <div class="map-location">
-            <strong>Paris Prefecture</strong>
-            <span>1 Rue de Lutece, 75004 Paris</span>
+            <strong>${state.lang === "es" ? "Oficina de Extranjería – Madrid" : "Extranjería Office – Madrid"}</strong>
+            <span>Calle Pradillo, 40, 28002 Madrid</span>
           </div>
         </div>
         <div class="actions">
-          <a class="button secondary" href="https://www.google.com/maps/search/?api=1&query=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir dans Google Maps" : state.lang === "es" ? "Abrir en Google Maps" : "Open in Google Maps"}</a>
-          <a class="button primary" href="https://www.google.com/maps/dir/?api=1&destination=1%20Rue%20de%20Lut%C3%A8ce%2C%2075004%20Paris" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Itinéraire" : state.lang === "es" ? "Indicaciones" : "Get Directions"}</a>
+          <a class="button secondary" href="https://www.google.com/maps/search/?api=1&query=Calle+Pradillo,+40,+28002+Madrid" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir dans Google Maps" : state.lang === "es" ? "Abrir en Google Maps" : "Open in Google Maps"}</a>
+          <a class="button primary" href="https://www.google.com/maps/dir/?api=1&destination=Calle+Pradillo,+40,+28002+Madrid" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Itinéraire" : state.lang === "es" ? "Cómo llegar" : "Get Directions"}</a>
         </div>
       </section>
       <section class="panel resource-panel resources-info-panel">
-        <h2>${state.lang === "fr" ? "Prise de rendez-vous" : state.lang === "es" ? "Reserva de cita" : "Appointment Booking"}</h2>
+        <h2>${state.lang === "fr" ? "Prise de rendez-vous NIE" : state.lang === "es" ? "Reservar cita NIE" : "Book your NIE Appointment"}</h2>
         <div class="resource-row">
           <div>
-            <strong>Prefecture Appointment - Paris</strong>
-            <p>${state.lang === "fr" ? "Réservez un rendez-vous pour le titre de séjour via le portail officiel de la préfecture." : state.lang === "es" ? "Reserva una cita de permiso de residencia en el portal oficial de la prefectura." : "Book a residence permit appointment through the official Paris prefecture portal."}</p>
+            <strong>${state.lang === "fr" ? "Portail officiel Cita Previa – Extranjería" : state.lang === "es" ? "Portal oficial Cita Previa – Extranjería" : "Official Cita Previa Portal – Extranjería"}</strong>
+            <p>${state.lang === "fr" ? "Prenez rendez-vous pour votre NIE via le système officiel du gouvernement espagnol (Policía Nacional – Extranjería)." : state.lang === "es" ? "Reserva tu cita para el NIE a través del sistema oficial de cita previa del gobierno español (Policía Nacional – Extranjería)." : "Book your NIE appointment through Spain's official government appointment system (Policía Nacional – Extranjería)."}</p>
           </div>
-          <a class="button primary" href="https://www.prefecturedepolicedeparis.fr/demarches/etrangers/titres-de-sejour" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Ouvrir le site" : state.lang === "es" ? "Ir al sitio" : "Go to Website"}</a>
+          <a class="button primary" href="https://icp.administracionelectronica.gob.es/icpplus/" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Prendre rendez-vous" : state.lang === "es" ? "Reservar cita" : "Book Appointment"}</a>
         </div>
-        <h2>${state.lang === "fr" ? "Documents requis" : state.lang === "es" ? "Documentos requeridos" : "Required Documents"}</h2>
+        <div class="resource-row">
+          <div>
+            <strong>${state.lang === "fr" ? "Formulaire EX-15 officiel" : state.lang === "es" ? "Formulario EX-15 oficial" : "Official EX-15 Form"}</strong>
+            <p>${state.lang === "fr" ? "Téléchargez le formulaire EX-15 sur le site du Ministère de l'Intérieur espagnol." : state.lang === "es" ? "Descarga el formulario EX-15 en el sitio web del Ministerio del Interior español." : "Download the EX-15 form from the Spanish Ministry of Interior website."}</p>
+          </div>
+          <a class="button secondary" href="https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/extranjeria/ciudadanos-extranjeros-en-espana/nie/" target="_blank" rel="noreferrer">${state.lang === "fr" ? "Télécharger" : state.lang === "es" ? "Descargar" : "Download"}</a>
+        </div>
+        <h2>${state.lang === "fr" ? "Documents requis – EX-15" : state.lang === "es" ? "Documentos necesarios – EX-15" : "Required Documents – EX-15"}</h2>
         <div class="checklist">
-          <label><input type="checkbox" checked /> ${state.lang === "fr" ? "Passeport / ID" : state.lang === "es" ? "Pasaporte / ID" : "Passport / ID"}</label>
-          <label><input type="checkbox" checked /> ${state.lang === "fr" ? "Justificatif de domicile" : state.lang === "es" ? "Comprobante de domicilio" : "Proof of Address"}</label>
-          <label><input type="checkbox" /> ${state.lang === "fr" ? "Formulaire complété" : state.lang === "es" ? "Formulario completado" : "Completed Application Form"}</label>
-          <label><input type="checkbox" /> ${state.lang === "fr" ? "Preuve de ressources financières" : state.lang === "es" ? "Prueba de recursos financieros" : "Proof of Financial Resources"}</label>
+          <label><input type="checkbox" checked /> ${state.lang === "fr" ? "Passeport en cours de validité (original + photocopie)" : state.lang === "es" ? "Pasaporte en vigor (original + fotocopia)" : "Valid passport (original + photocopy)"}</label>
+          <label><input type="checkbox" /> ${state.lang === "fr" ? "Formulaire EX-15 complété et signé" : state.lang === "es" ? "Formulario EX-15 cumplimentado y firmado" : "Completed and signed EX-15 form"}</label>
+          <label><input type="checkbox" /> ${state.lang === "fr" ? "Justificatif du motif (économique / professionnel / social)" : state.lang === "es" ? "Documento acreditativo del motivo (económico / profesional / social)" : "Supporting document for reason (economic / professional / social)"}</label>
+          <label><input type="checkbox" /> ${state.lang === "fr" ? "Justificatif de domicile en Espagne" : state.lang === "es" ? "Prueba de domicilio en España" : "Proof of address in Spain"}</label>
+          <label><input type="checkbox" /> ${state.lang === "fr" ? "Confirmation de rendez-vous (imprimée)" : state.lang === "es" ? "Confirmación de la cita (impresa)" : "Appointment confirmation (printed)"}</label>
+          <label><input type="checkbox" /> ${state.lang === "fr" ? "Photo d'identité récente" : state.lang === "es" ? "Fotografía reciente en color" : "Recent passport-size photo"}</label>
         </div>
-        <button class="button secondary" type="button">${state.lang === "fr" ? "Voir la checklist complète" : state.lang === "es" ? "Ver lista completa" : "View Full Checklist"}</button>
         <div class="actions">
           <button class="button secondary" type="button" data-back="assistant">${state.lang === "fr" ? "Retour" : state.lang === "es" ? "Atrás" : "Back"}</button>
           <button class="button primary" type="button" data-next="upload">${state.lang === "fr" ? "Retour au tableau de bord" : state.lang === "es" ? "Volver al panel" : "Back to Dashboard"}</button>
