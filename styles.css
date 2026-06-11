@@ -343,6 +343,15 @@ h1 {
   font-weight: 800;
 }
 
+.card-title {
+  margin-bottom: 18px;
+}
+
+.organization-name {
+  color: var(--primary);
+  font-weight: 900;
+}
+
 .form-panel {
   padding: 28px;
 }
@@ -405,9 +414,29 @@ h1 {
   font-weight: 800;
 }
 
-.field-status {
-  color: var(--success);
+.field-error {
+  color: #b42318;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.field-error[hidden] {
+  display: none;
+}
+
+.field-error span {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: #b42318;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .actions {

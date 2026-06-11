@@ -262,7 +262,6 @@ function loginView() {
   return `
     <section class="entry-card panel">
       <div>
-        <p class="eyebrow">${t("app.name")}</p>
         <h1>${t("login")}</h1>
         <p>${state.lang === "fr" ? "Connectez-vous avec votre profil école pour démarrer votre onboarding personnalisé." : state.lang === "es" ? "Conéctate con tu perfil de la escuela para iniciar tu onboarding personalizado." : "Connect with your school profile to start your personalized onboarding."}</p>
       </div>
@@ -277,23 +276,19 @@ function personalView() {
   const fields = [
     ["firstName", state.lang === "fr" ? "Prénom" : state.lang === "es" ? "Nombre" : "First Name", "text"],
     ["lastName", state.lang === "fr" ? "Nom" : state.lang === "es" ? "Apellido" : "Last Name", "text"],
+    ["nationality", state.lang === "fr" ? "Nationalité" : state.lang === "es" ? "Nacionalidad" : "Nationality", "text"],
     ["phone", state.lang === "fr" ? "Numéro de téléphone" : state.lang === "es" ? "Número de teléfono" : "Phone Number", "tel"],
     ["passport", state.lang === "fr" ? "Passeport / ID" : state.lang === "es" ? "Pasaporte / ID" : "Passport / ID Number", "text"],
-    ["nationality", state.lang === "fr" ? "Nationalité" : state.lang === "es" ? "Nacionalidad" : "Nationality", "text"],
     ["address", state.lang === "fr" ? "Adresse" : state.lang === "es" ? "Dirección" : "Address", "text", "full"]
   ];
   return `
-    <div class="onboarding-heading">
-      <p class="eyebrow">${state.lang === "fr" ? "Onboarding" : state.lang === "es" ? "Onboarding" : "Onboarding"}</p>
-      <h1>${t("personal")}</h1>
-    </div>
     <div class="split-layout">
       <aside class="panel illustration-panel">
         ${identitySvg()}
-        <span class="school-badge">ESCP Business School</span>
       </aside>
       <section class="panel form-panel">
-        <div class="notice">${state.lang === "fr" ? "Ces informations ont été préremplies par ESCP Business School. Vérifiez-les et corrigez les informations incorrectes." : state.lang === "es" ? "Esta información ha sido rellenada previamente por ESCP Business School. Revísala y corrige cualquier dato incorrecto." : "This information has been pre-filled by ESCP Business School. Please review and update any incorrect information."}</div>
+        <h2 class="card-title">${t("personal")}</h2>
+        <div class="notice">${state.lang === "fr" ? "Ces informations ont été préremplies par" : state.lang === "es" ? "Esta información ha sido rellenada previamente por" : "This information has been pre-filled by"} <strong class="organization-name">ESCP Business School</strong>. ${state.lang === "fr" ? "Vérifiez-les et corrigez les informations incorrectes." : state.lang === "es" ? "Revísala y corrige cualquier dato incorrecto." : "Please review and update any incorrect information."}</div>
         <div class="form-grid">
           ${fields
             .map(([key, label, type, size]) => `
@@ -303,7 +298,7 @@ function personalView() {
                   <input id="${key}" type="${type}" value="${state.profile[key]}" aria-describedby="${key}Status" />
                   <button class="edit-icon" type="button" aria-label="Edit ${label}">✎</button>
                 </div>
-                <span class="field-status" id="${key}Status">${state.lang === "fr" ? "Format validé" : state.lang === "es" ? "Formato validado" : "Validated format"}</span>
+                <span class="field-error" id="${key}Status" hidden><span aria-hidden="true">!</span>${state.lang === "fr" ? "Format incorrect" : state.lang === "es" ? "Formato incorrecto" : "Invalid format"}</span>
               </div>
             `)
             .join("")}
