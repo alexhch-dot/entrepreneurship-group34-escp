@@ -64,9 +64,9 @@ select:focus-visible {
 }
 
 .app-shell.entry-mode .main {
-  width: min(1080px, calc(100% - 32px));
+  width: 100%;
   margin: 0 auto;
-  padding-top: 44px;
+  padding: 0;
 }
 
 .app-shell.entry-mode .screen-host {
@@ -300,27 +300,90 @@ h1 {
   gap: 24px;
 }
 
-.entry-card {
-  min-height: 520px;
-  padding: clamp(28px, 6vw, 72px);
+.connection-screen {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
   display: grid;
-  align-content: center;
-  gap: 28px;
+  grid-template-rows: repeat(6, 1fr);
+  background:
+    linear-gradient(180deg, rgba(248, 249, 251, 0.92), rgba(248, 249, 251, 0.98)),
+    radial-gradient(circle at 25% 18%, rgba(220, 232, 255, 0.9), transparent 32%),
+    #f8f9fb;
 }
 
-.entry-card h1 {
-  max-width: 680px;
+.document-gallery {
+  grid-row: 2 / 4;
+  align-self: center;
+  overflow: hidden;
+  padding: 12px 0;
 }
 
-.entry-card p:not(.eyebrow) {
-  max-width: 580px;
-  color: var(--muted);
-  line-height: 1.6;
+.gallery-track {
+  display: flex;
+  width: max-content;
+  gap: 16px;
+  animation: gallery-scroll 28s linear infinite;
+}
+
+.gallery-card {
+  width: clamp(190px, 18vw, 260px);
+  min-height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: grid;
+  align-content: end;
+}
+
+.gallery-card::before {
+  content: "";
+  width: 42px;
+  height: 48px;
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, transparent 0 26%, #b8c8e8 27% 40%, transparent 41%),
+    var(--secondary);
+  border: 1px solid #b8c8e8;
+}
+
+.gallery-card span {
+  margin-top: 14px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.connection-content {
+  grid-row: 4 / 6;
+  align-self: start;
+  justify-self: center;
+  width: min(720px, calc(100% - 32px));
+  text-align: center;
+  display: grid;
+  gap: 24px;
+}
+
+.connection-content h1 {
+  font-size: clamp(2rem, 5vw, 4rem);
 }
 
 .login-actions {
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
+}
+
+@keyframes gallery-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 8px));
+  }
 }
 
 .onboarding-heading {
@@ -950,8 +1013,8 @@ textarea {
   }
 
   .app-shell.entry-mode .main {
-    width: min(100% - 24px, 1080px);
-    padding-top: 24px;
+    width: 100%;
+    padding-top: 0;
   }
 
   .sidebar {

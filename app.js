@@ -281,14 +281,34 @@ function escapeHtml(value) {
 }
 
 function loginView() {
-  return `
-    <section class="entry-card panel">
-      <div>
-        <h1>${t("login")}</h1>
-        <p>${state.lang === "fr" ? "Connectez-vous avec votre profil école pour démarrer votre onboarding personnalisé." : state.lang === "es" ? "Conéctate con tu perfil de la escuela para iniciar tu onboarding personalizado." : "Connect with your school profile to start your personalized onboarding."}</p>
+  const documents = [
+    state.lang === "fr" ? "Titre de séjour" : state.lang === "es" ? "Permiso de residencia" : "Residence Permit",
+    state.lang === "fr" ? "Renouvellement visa" : state.lang === "es" ? "Renovación de visa" : "Visa Renewal",
+    state.lang === "fr" ? "Assurance santé" : state.lang === "es" ? "Seguro médico" : "Health Insurance",
+    state.lang === "fr" ? "Inscription logement" : state.lang === "es" ? "Registro de vivienda" : "Housing Registration",
+    state.lang === "fr" ? "Compte bancaire" : state.lang === "es" ? "Cuenta bancaria" : "Bank Account",
+    state.lang === "fr" ? "Documents CAF" : state.lang === "es" ? "Documentos CAF" : "CAF Documents"
+  ];
+  const galleryCards = [...documents, ...documents]
+    .map((documentName) => `
+      <div class="gallery-card">
+        <span>${documentName}</span>
       </div>
-      <div class="login-actions">
-        <button class="button primary" type="button" data-next="personal">${state.lang === "fr" ? "Se connecter" : state.lang === "es" ? "Conectar" : "Connect"}</button>
+    `)
+    .join("");
+  return `
+    <section class="connection-screen">
+      <div class="document-gallery" aria-label="Supported administrative documents">
+        <div class="gallery-track">
+          ${galleryCards}
+        </div>
+      </div>
+      <div class="connection-content">
+        <h1>AI assistant for administrative</h1>
+        <div class="login-actions">
+          <button class="button primary" type="button" data-next="personal">${state.lang === "fr" ? "Connexion avec l’organisation" : state.lang === "es" ? "Conectar con organización" : "Connect with organization"}</button>
+          <button class="button secondary" type="button" data-next="upload">${state.lang === "fr" ? "Créer un compte" : state.lang === "es" ? "Crear cuenta" : "Create account"}</button>
+        </div>
       </div>
     </section>
   `;
