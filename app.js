@@ -313,7 +313,7 @@ async function analyzeUploadedDocument(fileRecord, file) {
   try {
     const text = await extractDocumentText(fileRecord, file);
     fileRecord.text = text;
-    const baseAnalysis = buildStructuredAnalysis(text, fileRecord);
+    const baseAnalysis = mockDocumentAnalyzer.analyze(text, state.profile);
     state.analysis = {
       status: "ready",
       result: await runRecommendationLayer(baseAnalysis, text, fileRecord),
@@ -358,10 +358,115 @@ function normalizeAnalysisResult(result, fallback) {
     confidence: Number.isFinite(result.confidence) ? result.confidence : fallback.confidence,
     autoFilledFields: Array.isArray(result.autoFilledFields) ? result.autoFilledFields : fallback.autoFilledFields,
     missingFields: Array.isArray(result.missingFields) ? result.missingFields : fallback.missingFields,
+    guidanceSections: Array.isArray(result.guidanceSections) ? result.guidanceSections : (fallback.guidanceSections || []),
     guidanceCards: Array.isArray(result.guidanceCards) ? result.guidanceCards : fallback.guidanceCards,
     highlights: Array.isArray(result.highlights) ? result.highlights : fallback.highlights
   };
 }
+
+// ── DocumentAnalyzer interface ────────────────────────────────────────────────
+// Any analyzer (mock or future OpenAI) must implement:
+//   analyze(documentText: string, profile: object): DocumentAnalysisResult
+// DocumentAnalysisResult shape: { documentType, confidence, autoFilledFields,
+//   missingFields, guidanceSections, guidanceCards, highlights }
+// To switch to OpenAIDocumentAnalyzer: replace `mockDocumentAnalyzer` below.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const mockDocumentAnalyzer = {
+  analyze(documentText, profile) {
+    const requiredKeys = ["firstName", "lastName", "passport", "nationality", "address", "phone"];
+    const missingCount = requiredKeys.filter((k) => !profile[k]).length;
+    const confidence = Math.max(40, 100 - missingCount * 10);
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+
+    const autoFilledFields = [
+      fullName ? { fieldName: "Full name", value: fullName, source: "Student profile" } : null,
+      profile.passport ? { fieldName: "Passport number", value: profile.passport, source: "Student profile" } : null,
+      profile.nationality ? { fieldName: "Nationality", value: profile.nationality, source: "Student profile" } : null,
+      profile.address ? { fieldName: "Address", value: profile.address, source: "Student profile" } : null
+    ].filter(Boolean);
+
+    const missingFields = [
+      {
+        fieldName: "Place of birth",
+        reason: "Spanish authorities require your place of birth to complete the NIE application.",
+        suggestedAction: "Add your place of birth in Settings before submitting."
+      },
+      {
+        fieldName: "Marital status",
+        reason: "The EX-15 form requires your current marital status.",
+        suggestedAction: "Indicate your marital status when completing the form."
+      },
+      {
+        fieldName: "Reason for NIE request",
+        reason: "You must specify whether the NIE is for economic, professional, or social interests.",
+        suggestedAction: "Select your reason (economic, professional, or social interests) when completing the form."
+      }
+    ];
+
+    const personalReady = !!(profile.firstName && profile.lastName && profile.nationality && profile.address);
+    const passportReady = !!profile.passport;
+    const contactReady = !!profile.phone;
+
+    const guidanceSections = [
+      {
+        title: "Personal Information",
+        status: personalReady ? "ready" : "missing",
+        body: personalReady
+          ? `The following information can be completed automatically: ${[fullName, profile.nationality, profile.address].filter(Boolean).join(" · ")}.`
+          : "Some personal information is missing. Update your profile in Settings."
+      },
+      {
+        title: "Passport Information",
+        status: passportReady ? "ready" : "missing",
+        body: passportReady
+          ? `Your passport number (${profile.passport}) has been identified and can be inserted into the application form.`
+          : "No passport number found in your profile. Add it in Settings before submission."
+      },
+      {
+        title: "Contact Information",
+        status: contactReady ? "ready" : "missing",
+        body: contactReady
+          ? `Your phone number (${profile.phone}) can be used for notifications.`
+          : "Phone number is missing. Add it in Settings."
+      },
+      {
+        title: "Reason for NIE Request",
+        status: "missing",
+        body: "Please select: Economic interests, Professional interests, or Social interests."
+      },
+      {
+        title: "Signature Requirement",
+        status: "action-required",
+        body: "The applicant must sign the document manually before submission."
+      }
+    ];
+
+    const statusLabels = { ready: "Ready to fill", missing: "Missing Information", "action-required": "Action Required" };
+    const guidanceCards = guidanceSections.map((s) => ({
+      title: `${s.title} · ${statusLabels[s.status]}`,
+      body: s.body
+    }));
+
+    const highlights = [
+      { id: "fullname", label: "Full Name", status: "ready", page: 1, bbox: [8, 16, 28, 8], explanation: "Your full name from the student profile will be used to complete this field on the EX-15 form." },
+      { id: "passport", label: "Passport Number", status: "ready", page: 1, bbox: [8, 28, 28, 8], explanation: "Spanish authorities require a valid passport number to issue a NIE. Source: student profile." },
+      { id: "nationality", label: "Nationality", status: "ready", page: 1, bbox: [8, 44, 28, 8], explanation: "Your nationality is pre-filled from your student profile." },
+      { id: "reason", label: "Reason for NIE", status: "missing", page: 1, bbox: [8, 60, 28, 8], explanation: "You must specify your reason for requesting a NIE: economic, professional, or social interests." },
+      { id: "signature", label: "Signature", status: "action-required", page: 1, bbox: [8, 76, 28, 8], explanation: "Manual signature required. Sign the form before submitting to Spanish authorities." }
+    ];
+
+    return {
+      documentType: "NIE Application (Modelo EX-15)",
+      confidence,
+      autoFilledFields,
+      missingFields,
+      guidanceSections,
+      guidanceCards,
+      highlights
+    };
+  }
+};
 
 async function extractDocumentText(fileRecord, file) {
   if (!/pdf$/i.test(fileRecord.type) && !/\.pdf$/i.test(fileRecord.name)) {
@@ -838,7 +943,41 @@ function analysisGuidanceView() {
   if (state.analysis.status === "error") {
     return `<div class="analysis-error">${escapeHtml(state.analysis.error)}</div>`;
   }
-  const cards = state.analysis.result?.guidanceCards || [];
+  const result = state.analysis.result;
+  if (!result) return "";
+
+  const sections = result.guidanceSections;
+  if (sections && sections.length) {
+    const statusMeta = {
+      ready: {
+        label: state.lang === "fr" ? "Prêt à remplir" : state.lang === "es" ? "Listo para rellenar" : "Ready to fill",
+        cls: "status-ready"
+      },
+      missing: {
+        label: state.lang === "fr" ? "Manquant" : state.lang === "es" ? "Falta información" : "Missing Information",
+        cls: "status-missing"
+      },
+      "action-required": {
+        label: state.lang === "fr" ? "Action requise" : state.lang === "es" ? "Acción requerida" : "Action Required",
+        cls: "status-action"
+      }
+    };
+    return sections.map((section) => {
+      const meta = statusMeta[section.status] || statusMeta.missing;
+      return `
+        <div class="guidance-card explainable">
+          <div class="guidance-card-header">
+            <strong>${escapeHtml(section.title)}</strong>
+            <span class="guidance-status ${meta.cls}">${meta.label}</span>
+          </div>
+          <p>${escapeHtml(section.body)}</p>
+          ${explanationButton(section.title, section.body)}
+        </div>
+      `;
+    }).join("");
+  }
+
+  const cards = result.guidanceCards || [];
   if (!cards.length) {
     return `<div class="analysis-empty">${state.lang === "fr" ? "Aucun champ à corriger détecté." : state.lang === "es" ? "No se detectaron campos para corregir." : "No fields requiring action were detected."}</div>`;
   }
@@ -870,7 +1009,7 @@ function analysisSuggestionsView() {
       title: state.lang === "fr" ? "Type de document" : state.lang === "es" ? "Tipo de documento" : "Document type",
       body: result.documentType
     },
-    ...result.autoFilledFields.slice(0, 3).map((field) => ({
+    ...result.autoFilledFields.slice(0, 4).map((field) => ({
       title: `${field.fieldName} ${state.lang === "fr" ? "prérempli" : state.lang === "es" ? "autocompletado" : "auto-filled"}`,
       body: `${field.value} · ${field.source}`
     })),

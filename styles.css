@@ -88,6 +88,11 @@ select:focus-visible {
   gap: 12px;
 }
 
+.brand-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .brand strong {
   display: block;
   font-size: 1rem;
@@ -704,6 +709,38 @@ textarea {
 .guidance-card p {
   margin-bottom: 0;
   font-size: 0.9rem;
+}
+
+.guidance-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.guidance-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-ready {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-missing {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.status-action {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .viewer-toolbar {
