@@ -2,6 +2,11 @@ const state = {
   route: "login",
   lang: "en",
   files: [],
+  analysis: {
+    status: "idle",
+    result: null,
+    error: ""
+  },
   rating: 0,
   contextText: "",
   profile: {
@@ -203,6 +208,21 @@ function bindViewEvents() {
     button.addEventListener("click", () => {
       const [removedFile] = state.files.splice(Number(button.dataset.removeFile), 1);
       if (removedFile?.url) URL.revokeObjectURL(removedFile.url);
+      if (!state.files.length) {
+        state.analysis = { status: "idle", result: null, error: "" };
+      } else if (state.files[0].text !== undefined) {
+        state.analysis = {
+          status: "ready",
+          result: buildStructuredAnalysis(state.files[0].text, state.files[0]),
+          error: ""
+        };
+      } else {
+        state.analysis = {
+          status: "ready",
+          result: buildStructuredAnalysis("", state.files[0]),
+          error: ""
+        };
+      }
       render();
     });
   });
@@ -251,17 +271,284 @@ function updateCounter(textarea) {
 
 function addFiles(fileList) {
   const accepted = ["application/pdf", "image/png", "image/jpeg"];
+  const hadNoFiles = state.files.length === 0;
   Array.from(fileList)
     .filter((file) => accepted.includes(file.type) || /\.(pdf|png|jpe?g)$/i.test(file.name))
-    .forEach((file) => {
-      state.files.push({
+    .forEach((file, index) => {
+      const fileRecord = {
         name: file.name,
         size: file.size,
         type: file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg"),
         url: URL.createObjectURL(file)
-      });
+      };
+      state.files.push(fileRecord);
+      if (hadNoFiles && index === 0) analyzeUploadedDocument(fileRecord, file);
     });
   render();
+}
+
+async function analyzeUploadedDocument(fileRecord, file) {
+  state.analysis = { status: "loading", result: null, error: "" };
+  if (state.route === "assistant") render();
+  try {
+    const text = await extractDocumentText(fileRecord, file);
+    fileRecord.text = text;
+    const baseAnalysis = buildStructuredAnalysis(text, fileRecord);
+    state.analysis = {
+      status: "ready",
+      result: await runRecommendationLayer(baseAnalysis, text, fileRecord),
+      error: ""
+    };
+  } catch (error) {
+    state.analysis = {
+      status: "error",
+      result: null,
+      error: error.message || "Unable to analyze this document."
+    };
+  }
+  if (state.route === "assistant") render();
+}
+
+async function runRecommendationLayer(baseAnalysis, text, fileRecord) {
+  if (typeof window.documentAnalysisLLM !== "function") return baseAnalysis;
+  try {
+    const llmResult = await window.documentAnalysisLLM({
+      documentText: text,
+      fileName: fileRecord.name,
+      profile: { ...state.profile },
+      requiredShape: {
+        documentType: "",
+        confidence: 0,
+        autoFilledFields: [],
+        missingFields: [],
+        guidanceCards: [],
+        highlights: []
+      }
+    });
+    return normalizeAnalysisResult(llmResult, baseAnalysis);
+  } catch {
+    return baseAnalysis;
+  }
+}
+
+function normalizeAnalysisResult(result, fallback) {
+  if (!result || typeof result !== "object") return fallback;
+  return {
+    documentType: typeof result.documentType === "string" ? result.documentType : fallback.documentType,
+    confidence: Number.isFinite(result.confidence) ? result.confidence : fallback.confidence,
+    autoFilledFields: Array.isArray(result.autoFilledFields) ? result.autoFilledFields : fallback.autoFilledFields,
+    missingFields: Array.isArray(result.missingFields) ? result.missingFields : fallback.missingFields,
+    guidanceCards: Array.isArray(result.guidanceCards) ? result.guidanceCards : fallback.guidanceCards,
+    highlights: Array.isArray(result.highlights) ? result.highlights : fallback.highlights
+  };
+}
+
+async function extractDocumentText(fileRecord, file) {
+  if (!/pdf$/i.test(fileRecord.type) && !/\.pdf$/i.test(fileRecord.name)) {
+    return "";
+  }
+  const buffer = await file.arrayBuffer();
+  return extractPdfText(buffer);
+}
+
+async function extractPdfText(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const raw = bytesToBinaryString(bytes);
+  const textParts = [];
+  textParts.push(...extractTextOperators(raw));
+
+  const streamPattern = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  const streams = raw.matchAll(streamPattern);
+  for (const match of streams) {
+    const streamBytes = binaryStringToBytes(match[1]);
+    const inflated = await inflatePdfStream(streamBytes);
+    if (inflated) textParts.push(...extractTextOperators(bytesToBinaryString(inflated)));
+  }
+
+  return textParts
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function inflatePdfStream(bytes) {
+  if (!("DecompressionStream" in window)) return null;
+  try {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+function extractTextOperators(pdfText) {
+  const parts = [];
+  const hexArrayPattern = /\[(.*?)\]\s*TJ/gs;
+  for (const match of pdfText.matchAll(hexArrayPattern)) {
+    const text = [...match[1].matchAll(/<([0-9a-fA-F]+)>/g)]
+      .map((hex) => decodePdfHexString(hex[1]))
+      .join("");
+    if (text.trim()) parts.push(text);
+  }
+
+  const hexStringPattern = /<([0-9a-fA-F]+)>\s*Tj/g;
+  for (const match of pdfText.matchAll(hexStringPattern)) {
+    const text = decodePdfHexString(match[1]);
+    if (text.trim()) parts.push(text);
+  }
+
+  const literalPattern = /\(([^()]*)\)\s*Tj/g;
+  for (const match of pdfText.matchAll(literalPattern)) {
+    const text = decodePdfLiteralString(match[1]);
+    if (text.trim()) parts.push(text);
+  }
+
+  return parts;
+}
+
+function decodePdfHexString(hex) {
+  let output = "";
+  for (let index = 0; index < hex.length; index += 4) {
+    const chunk = hex.slice(index, index + 4);
+    if (chunk.length < 4) continue;
+    const code = parseInt(chunk, 16);
+    if (!code) continue;
+    if (code === 0x07af) output += "fi";
+    else if (code === 0x07b0) output += "fl";
+    else if (code === 0x0202) output += "-";
+    else if (code === 0x031a) output += "'";
+    else if (code < 0x100) output += String.fromCharCode(code + 29);
+    else output += " ";
+  }
+  return output;
+}
+
+function decodePdfLiteralString(value) {
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\([()\\])/g, "$1");
+}
+
+function bytesToBinaryString(bytes) {
+  let output = "";
+  const chunkSize = 8192;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    output += String.fromCharCode(...bytes.slice(index, index + chunkSize));
+  }
+  return output;
+}
+
+function binaryStringToBytes(value) {
+  const bytes = new Uint8Array(value.length);
+  for (let index = 0; index < value.length; index += 1) {
+    bytes[index] = value.charCodeAt(index) & 255;
+  }
+  return bytes;
+}
+
+function buildStructuredAnalysis(text, fileRecord) {
+  const normalizedText = text.toLowerCase();
+  const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  const textInsufficient = wordCount < 20;
+  const documentType = detectDocumentType(normalizedText, fileRecord.name);
+  const fieldCatalog = [
+    { fieldName: "First name", profileKey: "firstName", patterns: ["first name", "given name", "forename", "prénom", "nombre"] },
+    { fieldName: "Last name", profileKey: "lastName", patterns: ["last name", "surname", "family name", "nom", "apellido"] },
+    { fieldName: "Phone number", profileKey: "phone", patterns: ["phone", "telephone", "mobile", "téléphone", "teléfono"] },
+    { fieldName: "Passport / ID number", profileKey: "passport", patterns: ["passport", "id number", "identity", "passeport", "pasaporte"] },
+    { fieldName: "Nationality", profileKey: "nationality", patterns: ["nationality", "nationalité", "nacionalidad"] },
+    { fieldName: "Address", profileKey: "address", patterns: ["address", "residence", "domicile", "adresse", "dirección"] }
+  ];
+  const detectedProfileFields = fieldCatalog.filter((field) => {
+    const profileValue = String(state.profile[field.profileKey] || "").toLowerCase();
+    return field.patterns.some((pattern) => normalizedText.includes(pattern)) || (profileValue && normalizedText.includes(profileValue));
+  });
+
+  const documentOnlyRequirements = [
+    { fieldName: "Signature", patterns: ["signature", "signed", "sign here"], reason: "The document asks for confirmation from the applicant.", suggestedAction: "Sign the form before submission." },
+    { fieldName: "Date", patterns: ["date", "dated"], reason: "Administrative forms often require a current completion date.", suggestedAction: "Add the date before submitting the document." },
+    { fieldName: "Proof of financial resources", patterns: ["financial resources", "bank statement", "resources", "proof of funds"], reason: "The process asks for proof that you can support yourself.", suggestedAction: "Upload a recent bank statement or scholarship certificate." },
+    { fieldName: "Proof of address", patterns: ["proof of address", "utility bill", "housing certificate", "attestation d'hébergement"], reason: "The administration needs evidence of your current residence.", suggestedAction: "Upload a recent accepted proof of address." }
+  ].filter((field) => field.patterns.some((pattern) => normalizedText.includes(pattern)));
+
+  if (textInsufficient) {
+    return {
+      documentType,
+      confidence: 18,
+      autoFilledFields: [],
+      missingFields: [],
+      guidanceCards: [
+        {
+          title: "Text extraction limited",
+          body: "The uploaded document is visible, but there was not enough selectable PDF text to identify fields reliably."
+        }
+      ],
+      highlights: []
+    };
+  }
+
+  const autoFilledFields = detectedProfileFields
+    .filter((field) => state.profile[field.profileKey])
+    .map((field) => ({
+      fieldName: field.fieldName,
+      value: state.profile[field.profileKey],
+      source: "Student profile"
+    }));
+
+  const missingProfileFields = detectedProfileFields
+    .filter((field) => !state.profile[field.profileKey])
+    .map((field) => ({
+      fieldName: field.fieldName,
+      reason: `${field.fieldName} appears to be requested in the document but is not available in the student profile.`,
+      suggestedAction: `Add ${field.fieldName.toLowerCase()} in Settings before final submission.`
+    }));
+
+  const missingFields = [...missingProfileFields, ...documentOnlyRequirements];
+  const guidanceCards = [
+    ...missingFields.slice(0, 4).map((field) => ({
+      title: field.fieldName,
+      body: `${field.reason} ${field.suggestedAction}`
+    })),
+    ...autoFilledFields.slice(0, Math.max(0, 4 - missingFields.length)).map((field) => ({
+      title: `${field.fieldName} ready`,
+      body: `This value can be filled from ${field.source}: ${field.value}.`
+    }))
+  ];
+
+  if (!guidanceCards.length) {
+    guidanceCards.push({
+      title: "No fillable fields detected",
+      body: "The PDF text was extracted, but no known administrative fields were detected."
+    });
+  }
+
+  const highlights = [...missingFields, ...autoFilledFields].slice(0, 4).map((field, index) => ({
+    label: field.fieldName,
+    page: 1,
+    bbox: [8 + index * 4, 16 + index * 12, 28, 8],
+    explanation: "Matched from extracted PDF text and compared with the student profile."
+  }));
+
+  return {
+    documentType,
+    confidence: Math.min(94, 35 + wordCount / 8 + autoFilledFields.length * 8 + missingFields.length * 4),
+    autoFilledFields,
+    missingFields,
+    guidanceCards,
+    highlights
+  };
+}
+
+function detectDocumentType(text, fileName) {
+  const source = `${text} ${fileName.toLowerCase()}`;
+  if (/residence|permit|titre de séjour|prefecture/.test(source)) return "Residence permit";
+  if (/visa/.test(source)) return "Visa process";
+  if (/housing|address|domicile|logement/.test(source)) return "Housing registration";
+  if (/insurance|assurance|health/.test(source)) return "Health insurance";
+  if (/bank|financial|resources/.test(source)) return "Financial documentation";
+  return "Administrative document";
 }
 
 function fileSize(bytes) {
@@ -492,6 +779,7 @@ function uploadedDocumentPreview() {
   const preview = isPdf
     ? `<iframe class="uploaded-document-frame" src="${fileUrl}" title="${fileName}"></iframe>`
     : `<img class="uploaded-document-image" src="${fileUrl}" alt="${fileName}" />`;
+  const highlights = state.analysis.result?.highlights || [];
   return `
     <div class="document-preview uploaded-document-preview" aria-label="Document preview">
       <div class="uploaded-document-header">
@@ -500,13 +788,90 @@ function uploadedDocumentPreview() {
       </div>
       <div class="uploaded-document-stage">
         ${preview}
-        <div class="document-overlay-note explainable">
-          <strong>${state.lang === "fr" ? "Zone à vérifier" : state.lang === "es" ? "Área para revisar" : "Section to review"}</strong>
-          ${explanationButton("Why is this section highlighted?", "The assistant uses this area to connect the uploaded document with the information required in the administrative process.")}
-        </div>
+        ${highlights.map((highlight, index) => documentHighlight(highlight, index)).join("")}
       </div>
     </div>
   `;
+}
+
+function documentHighlight(highlight, index) {
+  const [x, y, width, height] = highlight.bbox;
+  return `
+    <button
+      class="document-highlight explainable"
+      type="button"
+      style="left:${x}%; top:${y}%; width:${width}%; min-height:${height}%;"
+      data-explanation-title="${escapeHtml(highlight.label)}"
+      data-explanation="${escapeHtml(highlight.explanation)}">
+      <span>${escapeHtml(highlight.label)}</span>
+    </button>
+  `;
+}
+
+function analysisGuidanceView() {
+  if (!state.files.length) {
+    return `<div class="analysis-empty">${state.lang === "fr" ? "Importez un document pour afficher les conseils d’analyse." : state.lang === "es" ? "Sube un documento para ver la guía de análisis." : "Upload a document to see analysis guidance."}</div>`;
+  }
+  if (state.analysis.status === "loading") {
+    return `<div class="analysis-empty">${state.lang === "fr" ? "Analyse du document..." : state.lang === "es" ? "Analizando documento..." : "Analyzing document..."}</div>`;
+  }
+  if (state.analysis.status === "error") {
+    return `<div class="analysis-error">${escapeHtml(state.analysis.error)}</div>`;
+  }
+  const cards = state.analysis.result?.guidanceCards || [];
+  if (!cards.length) {
+    return `<div class="analysis-empty">${state.lang === "fr" ? "Aucun champ à corriger détecté." : state.lang === "es" ? "No se detectaron campos para corregir." : "No fields requiring action were detected."}</div>`;
+  }
+  return cards
+    .map((card) => `
+      <div class="guidance-card explainable">
+        <strong>${escapeHtml(card.title)}</strong>
+        <p>${escapeHtml(card.body)}</p>
+        ${explanationButton(card.title, card.body)}
+      </div>
+    `)
+    .join("");
+}
+
+function analysisSuggestionsView() {
+  if (!state.files.length) {
+    return `<div class="analysis-empty">${state.lang === "fr" ? "Aucune suggestion tant qu’aucun document n’est importé." : state.lang === "es" ? "No hay sugerencias hasta subir un documento." : "No suggestions until a document is uploaded."}</div>`;
+  }
+  if (state.analysis.status === "loading") {
+    return `<div class="analysis-empty">${state.lang === "fr" ? "Préparation des recommandations..." : state.lang === "es" ? "Preparando recomendaciones..." : "Preparing recommendations..."}</div>`;
+  }
+  if (state.analysis.status === "error") {
+    return `<div class="analysis-error">${escapeHtml(state.analysis.error)}</div>`;
+  }
+  const result = state.analysis.result;
+  if (!result) return "";
+  const suggestionCards = [
+    {
+      title: state.lang === "fr" ? "Type de document" : state.lang === "es" ? "Tipo de documento" : "Document type",
+      body: result.documentType
+    },
+    {
+      title: state.lang === "fr" ? "Confiance" : state.lang === "es" ? "Confianza" : "Confidence",
+      body: `${Math.round(result.confidence)}%`
+    },
+    ...result.autoFilledFields.slice(0, 3).map((field) => ({
+      title: `${field.fieldName} ${state.lang === "fr" ? "prérempli" : state.lang === "es" ? "autocompletado" : "auto-filled"}`,
+      body: `${field.value} · ${field.source}`
+    })),
+    ...result.missingFields.slice(0, 3).map((field) => ({
+      title: field.fieldName,
+      body: field.suggestedAction
+    }))
+  ];
+  return suggestionCards
+    .map((card) => `
+      <div class="suggestion explainable">
+        <strong>${escapeHtml(card.title)}</strong>
+        <p>${escapeHtml(card.body)}</p>
+        ${explanationButton(card.title, card.body)}
+      </div>
+    `)
+    .join("");
 }
 
 function assistantView() {
@@ -515,9 +880,7 @@ function assistantView() {
       <aside class="panel guidance-panel">
         <h3>${state.lang === "fr" ? "Guidage" : state.lang === "es" ? "Guía" : "Guidance"}</h3>
         <div class="guidance-list">
-          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Pourquoi c’est requis" : state.lang === "es" ? "Por qué se requiere" : "Why this is required"}</strong><p>${state.lang === "fr" ? "Les autorités d’immigration ont besoin d’une preuve de votre adresse actuelle." : state.lang === "es" ? "Las autoridades de inmigración necesitan prueba de tu residencia actual." : "Immigration authorities need proof of your current residential address."}</p>${explanationButton("Residence context", "This section connects your uploaded proof of address with the address requested by the residence permit application.")}</div>
-          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Exigence administrative" : state.lang === "es" ? "Requisito administrativo" : "Government requirement"}</strong><p>${state.lang === "fr" ? "L’adresse doit correspondre à une facture récente ou une attestation de logement." : state.lang === "es" ? "La dirección debe coincidir con una factura reciente o certificado de alojamiento." : "The address must match a recent utility bill or housing attestation."}</p>${explanationButton("Administrative source", "The requirement comes from government document checks and helps avoid appointment rejection.")}</div>
-          <div class="guidance-card explainable"><strong>${state.lang === "fr" ? "Erreur fréquente" : state.lang === "es" ? "Error común" : "Common mistake"}</strong><p>${state.lang === "fr" ? "N’utilisez pas l’adresse de l’école sauf si c’est votre résidence officielle." : state.lang === "es" ? "No uses la dirección de la escuela salvo que sea tu residencia oficial." : "Do not use your school address unless it is your official residence."}</p>${explanationButton("Common mistake", "School addresses are often rejected unless they are listed as your official housing address.")}</div>
+          ${analysisGuidanceView()}
         </div>
       </aside>
       <section class="panel viewer-panel">
@@ -534,9 +897,7 @@ function assistantView() {
       </section>
       <aside class="panel suggestions-panel">
         <h3>${state.lang === "fr" ? "Suggestions IA" : state.lang === "es" ? "Sugerencias de IA" : "AI Suggestions"}</h3>
-        <div class="suggestion"><strong>${state.lang === "fr" ? "Prérempli" : state.lang === "es" ? "Autocompletado" : "Auto-filled"}</strong><p>${state.lang === "fr" ? "Nom, nationalité, téléphone et adresse sont prêts." : state.lang === "es" ? "Nombre, nacionalidad, teléfono y dirección están listos." : "Full name, nationality, phone number, and address are ready."}</p></div>
-        <div class="suggestion warning"><strong>${state.lang === "fr" ? "Information manquante" : state.lang === "es" ? "Información faltante" : "Missing information"}</strong><p>${state.lang === "fr" ? "Importez une preuve de ressources financières avant l’envoi." : state.lang === "es" ? "Sube una prueba de recursos financieros antes de enviar." : "Upload proof of financial resources before submission."}</p></div>
-        <div class="suggestion"><strong>${state.lang === "fr" ? "Confiance" : state.lang === "es" ? "Confianza" : "Confidence"}</strong><p>${state.lang === "fr" ? "Score de complétion : 82%" : state.lang === "es" ? "Puntuación de finalización: 82%" : "Document completion score: 82%"}</p></div>
+        ${analysisSuggestionsView()}
       </aside>
     </div>
   `;
