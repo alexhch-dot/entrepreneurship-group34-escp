@@ -50,7 +50,7 @@ select:focus-visible {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 232px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -76,10 +76,10 @@ select:focus-visible {
 .sidebar {
   background: #0d285a;
   color: white;
-  padding: 28px 20px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 22px;
 }
 
 .brand {
@@ -115,7 +115,7 @@ select:focus-visible {
 
 .nav-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nav-item {
@@ -123,7 +123,7 @@ select:focus-visible {
   border-radius: 8px;
   background: transparent;
   color: #dce8ff;
-  padding: 13px 12px;
+  padding: 11px 10px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -177,15 +177,15 @@ select:focus-visible {
 
 .main {
   min-width: 0;
-  padding: 28px clamp(18px, 4vw, 48px) 42px;
+  padding: 20px clamp(18px, 3vw, 36px) 32px;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 22px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .eyebrow {
@@ -244,7 +244,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .progress-wrap[hidden] {
@@ -284,7 +284,7 @@ h1 {
 }
 
 .screen-host {
-  min-height: 620px;
+  min-height: auto;
 }
 
 .panel {
@@ -296,8 +296,10 @@ h1 {
 
 .split-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
-  gap: 24px;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr);
+  gap: 18px;
+  width: min(100%, 880px);
+  margin: 0 auto;
 }
 
 .connection-screen {
@@ -391,8 +393,8 @@ h1 {
 }
 
 .illustration-panel {
-  min-height: 420px;
-  padding: 28px;
+  min-height: 340px;
+  padding: 32px;
   display: grid;
   align-content: center;
   gap: 22px;
@@ -426,7 +428,7 @@ h1 {
 }
 
 .form-panel {
-  padding: 28px;
+  padding: 32px;
 }
 
 .notice {
@@ -435,7 +437,7 @@ h1 {
   padding: 14px 16px;
   color: #233a66;
   border-radius: 0 8px 8px 0;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .muted {
@@ -445,12 +447,12 @@ h1 {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   position: relative;
 }
 
@@ -517,7 +519,7 @@ h1 {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 .button {
@@ -548,13 +550,14 @@ h1 {
 .context-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
-  max-width: 920px;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .context-visual {
-  min-height: 160px;
-  padding: 24px;
+  min-height: 128px;
+  padding: 32px;
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
   align-items: center;
@@ -562,11 +565,11 @@ h1 {
 }
 
 .context-visual svg {
-  width: 180px;
+  width: 150px;
 }
 
 .chat-input-panel {
-  padding: 24px;
+  padding: 32px;
 }
 
 .example-list {
@@ -586,7 +589,7 @@ h1 {
 
 textarea {
   width: 100%;
-  min-height: 180px;
+  min-height: 150px;
   resize: vertical;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -603,11 +606,13 @@ textarea {
 .upload-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
+  gap: 16px;
+  width: min(100%, 800px);
+  margin: 0 auto;
 }
 
 .upload-zone {
-  min-height: 230px;
+  min-height: 190px;
   border: 2px dashed #9db7e7;
   border-radius: 8px;
   background: #f4f8ff;
@@ -667,7 +672,12 @@ textarea {
 .service-panel,
 .resource-panel,
 .help-panel {
-  padding: 22px;
+  padding: 32px;
+}
+
+.help-panel {
+  width: min(100%, 800px);
+  margin: 0 auto;
 }
 
 .upload-service-panel {
@@ -682,27 +692,36 @@ textarea {
 
 .assistant-layout {
   display: grid;
-  grid-template-columns: 280px minmax(360px, 1fr) 300px;
+  grid-template-columns: minmax(220px, 25%) minmax(0, 75%);
   gap: 16px;
 }
 
 .guidance-panel,
 .suggestions-panel,
 .viewer-panel {
-  padding: 18px;
+  padding: 32px;
+}
+
+.suggestions-panel {
+  display: none;
 }
 
 .guidance-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .guidance-card {
   border-left: 4px solid var(--primary);
   background: #f6f9ff;
   border-radius: 0 8px 8px 0;
-  padding: 12px;
+  padding: 10px 12px;
   position: relative;
+}
+
+.guidance-card p {
+  margin-bottom: 0;
+  font-size: 0.9rem;
 }
 
 .viewer-toolbar {
@@ -714,11 +733,11 @@ textarea {
 }
 
 .document-preview {
-  min-height: 520px;
+  min-height: 620px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fdfefe;
-  padding: 26px;
+  padding: 18px;
   display: grid;
   gap: 18px;
 }
@@ -745,7 +764,7 @@ textarea {
 
 .uploaded-document-stage {
   position: relative;
-  min-height: 520px;
+  min-height: 620px;
   background: #eef2f8;
 }
 
@@ -753,7 +772,7 @@ textarea {
 .uploaded-document-image {
   width: 100%;
   height: 100%;
-  min-height: 520px;
+  min-height: 620px;
   display: block;
   border: 0;
   object-fit: contain;
@@ -965,7 +984,7 @@ textarea {
 .help-benefits {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .benefit {
@@ -1060,7 +1079,9 @@ textarea {
 
 .settings-panel {
   display: grid;
-  gap: 18px;
+  gap: 14px;
+  width: min(100%, 800px);
+  margin: 0 auto;
 }
 
 .settings-row {
